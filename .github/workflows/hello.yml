@@ -1,0 +1,15 @@
+name: Say Hello
+
+# Que se ejecuta cada vez un push a main
+on:
+  push:
+    branches:
+      - main
+
+# El trabajo que ha de realizar en cada push
+jobs:
+  hell_world:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Echo the message
+      - run: echo "Hello World"

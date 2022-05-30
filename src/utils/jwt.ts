@@ -1,5 +1,4 @@
 import { sign, verify } from 'jsonwebtoken';
-import { jwt } from '.';
 
 export const signToken = (payload: { _id: string, email: string }) => {
   if (!process.env.JWT_SECRET_SEED) {
