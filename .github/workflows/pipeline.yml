@@ -1,0 +1,23 @@
+name: Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Deploy: 
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+        # fetch-deph: 0 => para que solo se traiga el ultimo commit de tu repositorio
+          fetch-deph: 0
+        # usamos action de node que esta en markplace ya configurada y le especificamos la version
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+        # instalamos las dependencias
+      - name: Install dependencies
+        run: npm install 
