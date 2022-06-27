@@ -1,12 +1,13 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
+import { GetServerSideProps } from 'next'
+import { useRouter } from 'next/router';
 import NextLink from 'next/link';
+import { getSession, signIn, getProviders } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
 import { ErrorOutline } from '@mui/icons-material';
 import { AuthLayout } from '../../components/layouts/AuthLayout';
-import { Box, Grid, Typography, TextField, Button, Link, Chip } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { Box, Grid, Typography, TextField, Button, Link, Chip, Divider } from '@mui/material';
 import { validations } from '../../utils';
-import { AuthContext } from '../../context';
-import { useRouter } from 'next/router';
 
 interface FormData {
   email: string;
@@ -15,25 +16,32 @@ interface FormData {
 
 const LoginPage = () => {
   const router = useRouter();
-  const { loginUser } = useContext(AuthContext);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
   const [showError, setShowError] = useState(false);
+  const [providers, setProviders] = useState<any>({});
 
-  const onLoginUser = async ({ email, password }: FormData) => {
+  useEffect(() => {
+    getProviders().then(setProviders);
+  }, [])
+  
+
+  const onLoginUserWithCredentials = async ({ email, password }: FormData) => {
     setShowError(false);
-    const isValidLogin = await loginUser(email, password);
-    if (isValidLogin) return router.replace(router.query.p?.toString() || '/');
+    // const isValidLogin = await loginUser(email, password);
+    // if (isValidLogin) return router.replace(router.query.p?.toString() || '/');
 
-    setShowError(true);
-    setTimeout(() => setShowError(false), 3000);
+    // setShowError(true);
+    // setTimeout(() => setShowError(false), 3000);
+
+    await signIn('credentials', { email, password });
   }
 
   return (
     <AuthLayout title='Ingresar'>
       <form
         noValidate
-        onSubmit={handleSubmit(onLoginUser)}
+        onSubmit={handleSubmit(onLoginUserWithCredentials)}
       >
         <Box sx={{ width: 350, padding: '10px 20px' }}>
           <Grid container spacing={2}>
@@ -84,10 +92,51 @@ const LoginPage = () => {
               </NextLink>
             </Grid>
           </Grid>
+
+          <Grid item xs={12} display="flex" flexDirection={'column'} justifyContent="flex-end">
+            <Divider sx={{ width: '100%', mb: 2 }} />
+            {
+              Object.values(providers).map((prov: any) => {
+                if(prov.id === 'credentials') return;
+                return (
+                  <Button
+                    key={prov.id}
+                    variant="outlined"
+                    fullWidth
+                    color='primary'
+                    sx={{ mb: 1 }}
+                    onClick={() => signIn(prov.id)}
+                  >
+                    {prov.name}
+                  </Button>
+                )
+              })
+            }
+          </Grid>
         </Box>
       </form>
     </AuthLayout>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async ({ req, query }) => {
+  const session = await getSession({ req });
+  const { p = '/' } = query;
+
+  if (session) {
+    return {
+      redirect: {
+        destination: p.toString(),
+        permanent: false,
+      }
+    }
+  }
+
+  return {
+    props: {
+      
+    }
+  }
 }
 
 export default LoginPage

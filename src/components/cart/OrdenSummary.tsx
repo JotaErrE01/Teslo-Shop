@@ -1,11 +1,26 @@
 import { Grid, Typography } from '@mui/material';
-import { useContext } from 'react';
+import { useContext, FC } from 'react';
 import { CartContext } from '../../context';
 import { currency } from '../../utils';
 
-export const OrdenSummary = () => {
+interface Props {
+  orderValues?: {
+    total: number;
+    subTotal: number;
+    tax: number;
+    numberOfItems: number;
+  }
+}
+
+export const OrdenSummary: FC<Props> = ({ orderValues }) => {
   // No destructuring here, because we need to use the context object
   const { orderSummary, cart } = useContext( CartContext );
+  const { numberOfItems, subTotal } = orderSummary;
+
+  const summaryValues = orderValues ? orderValues : orderSummary;
+
+  console.log(orderValues);
+  
 
   return (
     <Grid container>
@@ -14,7 +29,7 @@ export const OrdenSummary = () => {
       </Grid>
 
       <Grid item xs={6} display='flex' justifyContent='end'>
-        <Typography>{ cart.length } Items</Typography>
+        <Typography>{ summaryValues.numberOfItems } { summaryValues.numberOfItems > 1 ? 'Items' : 'Item' }</Typography>
       </Grid>
 
       <Grid item xs={6}>
@@ -22,7 +37,7 @@ export const OrdenSummary = () => {
       </Grid>
 
       <Grid item xs={6} display='flex' justifyContent='end'>
-        <Typography>{ currency.format(orderSummary.subTotal) }</Typography>
+        <Typography>{ currency.format(summaryValues.subTotal) }</Typography>
       </Grid>
 
       <Grid item xs={6}>
@@ -30,7 +45,7 @@ export const OrdenSummary = () => {
       </Grid>
 
       <Grid item xs={6} display='flex' justifyContent='end'>
-        <Typography>{ currency.format(orderSummary.getImpuesto()) }</Typography>
+        <Typography>{ currency.format( orderValues ? orderValues.tax : orderSummary.getImpuesto()) }</Typography>
       </Grid>
 
       <Grid item xs={6} sx={{ mt: 2 }}>
@@ -38,7 +53,7 @@ export const OrdenSummary = () => {
       </Grid>
 
       <Grid item xs={6} sx={{ mt: 2 }} display='flex' justifyContent='end'>
-        <Typography variant='subtitle1'>{ currency.format(orderSummary.getTotal()) }</Typography>
+        <Typography variant='subtitle1'>{ currency.format(orderValues ? orderValues.total : orderSummary.getTotal()) }</Typography>
       </Grid>
     </Grid>
   )

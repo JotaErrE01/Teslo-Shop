@@ -1,9 +1,41 @@
+import { useContext, useMemo, useEffect, useState } from 'react';
+import { CartContext } from '../../context';
 import NextLink from 'next/link';
-import { Typography, Grid, Card, CardContent, Divider, Box, Button, Link } from '@mui/material';
+import { Typography, Grid, Card, CardContent, Divider, Box, Button, Link, Chip } from '@mui/material';
 import { CartList, OrdenSummary } from '../../components/cart';
 import { ShopLayout } from '../../components/layouts';
+import { countries } from '../../utils';
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/router';
 
 const SummaryPage = () => {
+  const router = useRouter();
+  const { shippingAddress, orderSummary, createOrder } = useContext( CartContext );
+  const [isPoisting, setIsPoisting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+    if(!Cookies.get('firstName')) router.push('/checkout/address');
+  }, [ router ]);
+
+  const onCreateOrder = async () => {
+    setIsPoisting(true);
+    const { hasError, message } = await createOrder();
+
+    if(hasError) {
+      setIsPoisting(false);
+      setErrorMessage(message);
+      return;
+    }
+
+    router.replace(`/orders/${ message }`)
+  }
+
+  if(!shippingAddress) return <></>;
+
+  const { firstName, lastName, address, address2, zip, city, country, phone } = shippingAddress;
+
+
   return (
     <ShopLayout
       title='Carrito - 3'
@@ -19,7 +51,7 @@ const SummaryPage = () => {
         <Grid item xs={ 12 } sm={ 5 }>
           <Card className='summary-card'>
             <CardContent>
-              <Typography variant='h2'>Resumen (3 productos)</Typography>
+              <Typography variant='h2'>Resumen ({ orderSummary.numberOfItems } {`${orderSummary.numberOfItems === 1 ? 'producto' : 'productos'}`})</Typography>
               <Divider sx={{ my: 1 }} />
 
               <Box display='flex' justifyContent='space-between'>
@@ -30,11 +62,12 @@ const SummaryPage = () => {
                 </NextLink>
               </Box>
 
-              <Typography>Fernando Herrera</Typography>
-              <Typography>algun lugar x</Typography>
-              <Typography>Smallville, TOK 340</Typography>
-              <Typography>Canadá</Typography>
-              <Typography>+1 8468465465</Typography>
+              <Typography>{ `${ firstName } ${ lastName }` }</Typography>
+              <Typography>{ address } { address2 ? ',' + address2 : '' }</Typography>
+              <Typography>{ city } { zip }</Typography>
+              {/* <Typography>{ countries.find(({ code }) => code === country)!.name }</Typography> */}
+              <Typography>{ country }</Typography>
+              <Typography>{ phone }</Typography>
 
               <Divider sx={{ my: 1 }} />
 
@@ -46,10 +79,22 @@ const SummaryPage = () => {
 
               <OrdenSummary />
 
-              <Box sx={{ mt: 3 }}>
-                <Button color="secondary" className="circular-btn" fullWidth>
+              <Box sx={{ mt: 3 }} display='flex' flexDirection={'column'}>
+                <Button
+                  onClick={ onCreateOrder }
+                  color="secondary"
+                  className="circular-btn"
+                  fullWidth
+                  disabled={ isPoisting }
+                >
                   Confirmar Orden
                 </Button>
+
+                <Chip 
+                  color='error'
+                  label={ errorMessage }
+                  sx={{ display: errorMessage ? 'flex' : 'none', marginTop: 2 }}
+                />
               </Box>
             </CardContent>
           </Card>

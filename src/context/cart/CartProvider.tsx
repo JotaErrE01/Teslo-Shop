@@ -1,13 +1,17 @@
 import { FC, useReducer, ReactNode, useEffect } from 'react';
 import { cartReducer, CartContext } from '.';
-import { ICartProduct, IOrderSummary } from '../../interfaces';
+import { ICartProduct, IOrder, IOrderSummary, IShippingAddress } from '../../interfaces';
 import Cookie from 'js-cookie';
+import { tesloApi } from '../../api';
+import axios from 'axios';
 
 export interface CartState {
   isLoaded: boolean;
   cart: ICartProduct[];
   orderSummary: IOrderSummary;
+  shippingAddress?: IShippingAddress;
 }
+
 
 const CART_INITIAL_STATE: CartState = {
   isLoaded: false,
@@ -17,7 +21,8 @@ const CART_INITIAL_STATE: CartState = {
     subTotal: 0,
     getImpuesto(){ return 0 },
     getTotal(){ return 0 },
-  }
+  },
+  shippingAddress: undefined
 };
 
 export const CartProvider: FC<{ children: ReactNode }> = ({ children }) => {
@@ -28,9 +33,26 @@ export const CartProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const cart = JSON.parse(Cookie.get('cart') || '[]');
     dispatch({ type: '[cart] - LoadCart from cookies | storage', payload: cart });
   }, []);
+
+  useEffect(() => {
+    // si un valo es undefined, no realizar nada
+    if(!Cookie.get('firstName')) return;
+
+    const shippingAddress = {
+      firstName: Cookie.get('firstName') || '',
+      lastName: Cookie.get('lastName') || '',
+      address: Cookie.get('address') || '',
+      address2: Cookie.get('address2') || '',
+      zip: Cookie.get('zip') || '',
+      city: Cookie.get('city') || '',
+      country: Cookie.get('country') || '',
+      phone: Cookie.get('phone') || '',
+    }
+    dispatch({ type: '[cart] - LoadAddress from Cookies', payload: shippingAddress });
+  }, []);
   
   useEffect(() => {
-    if(!state.cart.length) return;
+    // if(!state.cart.length) return;
     // Guardar carrito en las cookies
     Cookie.set('cart', JSON.stringify(state.cart));
   }, [state.cart]);
@@ -72,6 +94,59 @@ export const CartProvider: FC<{ children: ReactNode }> = ({ children }) => {
     });
   }
 
+  const updateShippingAddress = (shippingAddress: IShippingAddress) => {
+    Cookie.set('firstName', shippingAddress.firstName);
+    Cookie.set('lastName', shippingAddress.lastName);
+    Cookie.set('address', shippingAddress.address);
+    Cookie.set('address2', shippingAddress.address2 || '');
+    Cookie.set('zip', shippingAddress.zip);
+    Cookie.set('city', shippingAddress.city);
+    Cookie.set('country', shippingAddress.country);
+    Cookie.set('phone', shippingAddress.phone);
+    dispatch({
+      type: '[cart] - Update Shipping Address',
+      payload: shippingAddress
+    });
+  }
+
+  const createOrder = async (): Promise<{ hasError: boolean; message: string; }> => {
+    if(!state.shippingAddress) {
+      throw new Error('No shipping address');
+    }
+
+    const body: IOrder = {
+      orderItems: state.cart.map( product => ({ ...product, size: product.size! }) ),
+      shippingAddress: state.shippingAddress,
+      numberOfItems: state.orderSummary.numberOfItems,
+      subTotal: state.orderSummary.subTotal,
+      tax: state.orderSummary.getImpuesto(),
+      total: state.orderSummary.getTotal(),
+      isPaid: false
+    }
+
+    try {
+      const { data } = await tesloApi.post<IOrder>('/orders', body);
+
+      dispatch({ type: '[cart] - Order Complete' });
+      return {
+        hasError: false,
+        message: data._id!
+      }
+      
+    } catch (error) {
+      if(axios.isAxiosError(error)) {
+        return {
+          hasError: true,
+          message: (error.response?.data as { message: string }).message,
+        }
+      }
+      return {
+        hasError: true,
+        message: 'Error al crear la orden, hable con el administrador'
+      }
+    }
+  }
+
   return (
     <CartContext.Provider
       value={{
@@ -81,6 +156,8 @@ export const CartProvider: FC<{ children: ReactNode }> = ({ children }) => {
         updateProductInCart,
         updatedCartQuantity,
         deleteProductInCart,
+        updateShippingAddress,
+        createOrder,
       }}
     >
       {children}

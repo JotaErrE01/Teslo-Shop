@@ -3,18 +3,22 @@ import { Grid, Typography, Link, CardActionArea, CardMedia, Box, Button } from '
 import { ItemCounter } from '../ui';
 import { FC, useContext } from 'react';
 import { CartContext } from '../../context';
+import { ICartProduct, IOrderItem } from '../../interfaces';
 
 interface Props {
   editable?: boolean;
+  products?: IOrderItem[];
 }
 
-export const CartList: FC<Props> = ({ editable = false }) => {
+export const CartList: FC<Props> = ({ editable = false, products }) => {
   const { cart, updatedCartQuantity, deleteProductInCart } = useContext(CartContext);
+
+  const productsToShow = products ? products : cart;
 
   return (
     <>
       {
-        cart.map(product => (
+        productsToShow.map(product => (
           <Grid container spacing={2} key={product.slug + product.size} sx={{ mb: 1 }}>
             <Grid item xs={3}>
               <NextLink href={`/product/${product.slug}`} passHref>
@@ -44,7 +48,7 @@ export const CartList: FC<Props> = ({ editable = false }) => {
                       maxValue={10}
                       updatedQuantity={(value) => {
                         product.quantity = value;
-                        updatedCartQuantity(product);
+                        updatedCartQuantity(product as ICartProduct);
                       }}
                     />
                     : <Typography variant='h5' >{product.quantity} {product.quantity > 1 ? 'productos' : 'producto'}</Typography>
@@ -54,14 +58,16 @@ export const CartList: FC<Props> = ({ editable = false }) => {
 
             <Grid item xs={2} display='flex' alignItems='center' flexDirection='column' >
               <Typography variant='subtitle1'>${product.price}</Typography>
-              {/* Editable */}
-              <Button
-                variant='text'
-                color='secondary'
-                onClick={() => deleteProductInCart(product)}
-              >
-                Remover
-              </Button>
+              {
+                editable &&
+                <Button
+                  variant='text'
+                  color='secondary'
+                  onClick={() => deleteProductInCart(product as ICartProduct)}
+                >
+                  Remover
+                </Button>
+              }
             </Grid>
           </Grid>
         ))

@@ -39,7 +39,12 @@ const CartPage = () => {
               <OrdenSummary />
 
               <Box sx={{ mt: 3 }}>
-                <Button color="secondary" className="circular-btn" fullWidth>
+                <Button
+                  onClick={ () => router.push('/checkout/address') }
+                  color="secondary"
+                  className="circular-btn"
+                  fullWidth
+                >
                   Checkout
                 </Button>
               </Box>

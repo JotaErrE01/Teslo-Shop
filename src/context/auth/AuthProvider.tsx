@@ -5,7 +5,7 @@ import { IUser } from '../../interfaces';
 import { tesloApi } from '../../api';
 import axios from 'axios';
 import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -19,28 +19,36 @@ const AUTH_INITIAL_STATE: AuthState = {
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, AUTH_INITIAL_STATE);
-  const router = useRouter();
+  const { data, status } = useSession();
+  // const router = useRouter();
 
   useEffect(() => {
-    if( !Cookies.get('token') ) {
-      return;
+    if (status === 'authenticated') {
+      dispatch({ type: '[Auth] Login', payload: data?.user as IUser });
     }
-    checkToken();
-  }, []);
+  }, [ status, data ]);
   
-  const checkToken = async () => {
-    try {
-      const { data } = await tesloApi.get('/user/validate-token');
-      const { user, token } = data;
-      Cookies.set('token', token);
 
-      // dispatch to update the state
-      dispatch({ type: '[Auth] Login', payload: user });
-    } catch (error) {
-      Cookies.remove('token');
-      console.log(error);
-    }
-  }
+  // useEffect(() => {
+  //   if( !Cookies.get('token') ) {
+  //     return;
+  //   }
+  //   checkToken();
+  // }, []);
+  
+  // const checkToken = async () => {
+  //   try {
+  //     const { data } = await tesloApi.get('/user/validate-token');
+  //     const { user, token } = data;
+  //     Cookies.set('token', token);
+
+  //     // dispatch to update the state
+  //     dispatch({ type: '[Auth] Login', payload: user });
+  //   } catch (error) {
+  //     Cookies.remove('token');
+  //     console.log(error);
+  //   }
+  // }
 
   const loginUser = async ( email: string, password: string ): Promise<boolean> => {
     try {
@@ -87,9 +95,19 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   const logout = () => {
-    Cookies.remove('token');
     Cookies.remove('cart');
-    router.reload();
+    Cookies.remove('firstName');
+    Cookies.remove('lastName');
+    Cookies.remove('address');
+    Cookies.remove('address2');
+    Cookies.remove('zip');
+    Cookies.remove('city');
+    Cookies.remove('country');
+    Cookies.remove('phone');
+    
+    signOut();
+    // router.reload();
+    // Cookies.remove('token');
   }
 
   return (

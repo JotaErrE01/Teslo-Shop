@@ -1,4 +1,3 @@
-import { GetStaticProps } from 'next'
 import { Typography } from '@mui/material';
 import type { NextPage } from 'next'
 import { ShopLayout } from '../components/layouts/ShopLayout';
