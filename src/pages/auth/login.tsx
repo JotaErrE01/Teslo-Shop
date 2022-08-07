@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GetServerSideProps } from 'next'
 import { useRouter } from 'next/router';
 import NextLink from 'next/link';

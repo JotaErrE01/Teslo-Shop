@@ -7,6 +7,7 @@ import { ItemCounter } from '../../components/ui';
 import { dbProducts } from '../../database';
 import { IProduct, ICartProduct } from '../../interfaces';
 import { CartContext } from '../../context';
+import { useRouter } from 'next/router';
 
 interface Props {
   product: IProduct;
@@ -24,12 +25,14 @@ const ProductPage: NextPage<Props> = ({ product }) => {
   });
 
   const { updateProductInCart } = useContext( CartContext );
+  const router = useRouter();
 
   const addProduct = () => {
     if(!tempCartProduct.size) return;
 
     // Llamar la accion de context para agregar al carrito
     updateProductInCart(tempCartProduct);
+    router.push('/cart');
   }
 
   return (

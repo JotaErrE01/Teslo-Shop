@@ -18,10 +18,7 @@ export const OrdenSummary: FC<Props> = ({ orderValues }) => {
   const { numberOfItems, subTotal } = orderSummary;
 
   const summaryValues = orderValues ? orderValues : orderSummary;
-
-  console.log(orderValues);
   
-
   return (
     <Grid container>
       <Grid item xs={6}>

@@ -1,4 +1,4 @@
-import React, { FC, useReducer, ReactNode } from 'react';
+import { FC, useReducer, ReactNode } from 'react';
 import Cookies from 'js-cookie';
 import { AuthContext, authReducer } from './';
 import { IUser } from '../../interfaces';
